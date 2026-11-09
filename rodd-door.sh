@@ -43,10 +43,14 @@ case "${1:-status}" in
     # one line, for the keyboard's indicator: is the pipeline up, is a client attached,
     # is the microphone open, and is the model rail actually serving the head the voice asks for?
     host="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8890/ 2>/dev/null || echo down)"
-    client="$(pgrep -fc ' talk --url' 2>/dev/null | tr -d '\n' || true)"
-    client="${client:-0}"
+    # Count only real clients. `pgrep -f` would match this very shell, whose own command
+    # line carries the pattern, and the light then claimed a voice that was not running.
+    client="$(ps -eo comm=,args= 2>/dev/null | awk '$1 ~ /^python/ && / talk --url/ {n++} END {print n+0}')"
     if mic_muted; then mic="muted"; else mic="open"; fi
-    head="${RODD_HEAD_MODEL:-qwen3.6-35b-a3b@iq3_s}"   # the same default apps/rodd/start.sh uses
+    # The head is whatever the RUNNING host was started with; the default is only a guess.
+    head="$(systemctl --user show ymir-voice-host -p ExecStart 2>/dev/null \
+      | grep -oE -- '--model_name [^ ]+' | awk '{print $2}' | head -1)"
+    head="${head:-${RODD_HEAD_MODEL:-qwen3.6-35b-a3b@iq3_s}}"
     rail="down"; state=""
     models="$(curl -s --max-time 2 http://127.0.0.1:8080/v1/models 2>/dev/null)"
     if [ -n "$models" ]; then
