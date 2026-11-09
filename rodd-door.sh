@@ -40,10 +40,33 @@ case "${1:-status}" in
     if mic_muted; then echo "microphone muted"; else echo "microphone open"; fi
     ;;
   status)
+    # one line, for the keyboard's indicator: is the pipeline up, is a client attached,
+    # is the microphone open, and is the model rail actually serving the head the voice asks for?
     host="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8890/ 2>/dev/null || echo down)"
     client="$(pgrep -fc ' talk --url' 2>/dev/null || echo 0)"
     if mic_muted; then mic="muted"; else mic="open"; fi
-    echo "host=$host client=$client mic=$mic"
+    head="${RODD_HEAD_MODEL:-qwen3.6-35b-a3b@iq3_s}"   # the same default apps/rodd/start.sh uses
+    rail="down"; state=""
+    models="$(curl -s --max-time 2 http://127.0.0.1:8080/v1/models 2>/dev/null)"
+    if [ -n "$models" ]; then
+      rail="up"
+      # llama-swap reports each model's own state; absent means the rail does not carry it
+      state="$(printf '%s' "$models" | python3 -c '
+import json,sys
+head = sys.argv[1]
+try:
+    data = json.load(sys.stdin).get("data", [])
+except Exception:
+    print("unknown"); raise SystemExit
+for m in data:
+    if m.get("id") == head:
+        print((m.get("status") or {}).get("value") or "present")
+        break
+else:
+    print("absent")
+' "$head" 2>/dev/null || echo unknown)"
+    fi
+    echo "host=$host client=$client mic=$mic rail=$rail head=$state"
     ;;
   *)
     echo "usage: rodd-door.sh start|stop|mute|status" >&2

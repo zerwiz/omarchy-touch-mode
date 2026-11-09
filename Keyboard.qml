@@ -198,6 +198,41 @@ Item {
     }
   }
 
+  // The rail light: the door's own status line, polled, so the header says whether
+  // Rödd's pipeline answers AND whether the model rail carries the head it asks for.
+  // Nothing here starts or stops anything; it only tells the truth about the rail.
+  property string roddLine: ""
+  readonly property var rodd: {
+    var out = {}
+    var parts = String(root.roddLine).split(" ")
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split("=")
+      if (kv.length === 2) out[kv[0]] = kv[1]
+    }
+    return out
+  }
+  readonly property bool roddReady: rodd.rail === "up" && rodd.head !== "absent" && rodd.host !== "down"
+  readonly property bool roddLive: rodd.client !== undefined && Number(rodd.client) > 0
+  readonly property string roddNote: rodd.rail === undefined || rodd.rail === ""
+    ? "checking…"
+    : (rodd.rail !== "up" ? "rail down"
+      : (rodd.head === "absent" ? "no head"
+        : (roddLive ? (rodd.head === "unloaded" ? "head cold" : "listening") : "ready")))
+  Process {
+    id: roddProbe
+    command: ["bash",
+      decodeURIComponent(Qt.resolvedUrl("rodd-door.sh").toString().replace(/^file:\/\//, "")),
+      "status"]
+    stdout: SplitParser { onRead: function(line) { root.roddLine = line } }
+  }
+  Timer {
+    interval: 6000
+    running: root.opened
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: if (!roddProbe.running) roddProbe.running = true
+  }
+
   // A small non-focusable layer surface; no full-screen dimmer or reserved
   // desktop area. Only this window receives pointer/touch events. No idle timers.
   PanelWindow {
@@ -235,7 +270,32 @@ Item {
           font.family: Style.font.family
           font.pixelSize: 14
         }
+        // The rail light — a dot and four words, in the house's own colours.
+        Rectangle {
+          anchors.right: controls.left
+          anchors.rightMargin: 6
+          anchors.verticalCenter: controls.verticalCenter
+          width: 126; height: 34; radius: 5
+          color: root.keyBackground
+          Rectangle {
+            width: 8; height: 8; radius: 4
+            anchors.left: parent.left; anchors.leftMargin: 10
+            anchors.verticalCenter: parent.verticalCenter
+            color: root.roddReady ? Color.accent : Color.urgent
+          }
+          Text {
+            anchors.left: parent.left; anchors.leftMargin: 24
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - 32
+            elide: Text.ElideRight
+            text: "Rödd · " + root.roddNote
+            color: root.foreground
+            font.pixelSize: 11
+            font.family: Style.font.family
+          }
+        }
         Row {
+          id: controls
           anchors.right: parent.right
           anchors.rightMargin: 52
           spacing: 6
