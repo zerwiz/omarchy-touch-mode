@@ -33,7 +33,15 @@ case "${1:-status}" in
     exec "$repo/apps/rodd/start.sh" --headless
     ;;
   stop)
-    exec "$repo/apps/rodd/start.sh" --stop
+    # TOTAL stop: the client, the toolbox and the tunnel (start.sh --stop), then the
+    # pipeline host itself, which lives as a systemd user unit and would otherwise sit
+    # warm on 8890 with nothing listening to him.
+    "$repo/apps/rodd/start.sh" --stop
+    "$repo/bin/voice/voice-door.sh" host --stop 2>/dev/null || true
+    for pid in $(ss -ltnp 2>/dev/null | grep ":8890 " | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u); do
+      kill "$pid" 2>/dev/null || true
+    done
+    bash "$0" status
     ;;
   toggle)
     # One button, two meanings: the same tap raises the voice when it is down and
