@@ -253,14 +253,17 @@ Item {
               required property var modelData
               width: modelData.action === "stop" ? 58 : 66
               height: 34; radius: 5
-              color: root.keyBackground
+              color: roddTap.pressed ? Color.accent : root.keyBackground
+              Behavior on color { ColorAnimation { duration: 90 } }
               Text {
                 anchors.centerIn: parent
                 text: modelData.label
-                color: root.foreground
+                color: roddTap.pressed ? Color.background : root.foreground
+                Behavior on color { ColorAnimation { duration: 90 } }
                 font.pixelSize: 12
               }
               TapHandler {
+                id: roddTap
                 onTapped: Quickshell.execDetached(["bash",
                   decodeURIComponent(Qt.resolvedUrl("rodd-door.sh").toString().replace(/^file:\/\//, "")),
                   modelData.action])
@@ -272,14 +275,18 @@ Item {
             delegate: Rectangle {
               required property string modelData
               width: 90; height: 34; radius: 5
-              color: root.keyBackground
+              color: tabTap.pressed ? Color.accent : root.keyBackground
+              Behavior on color { ColorAnimation { duration: 90 } }
               Text {
                 anchors.centerIn: parent
+                color: tabTap.pressed ? Color.background : root.foreground
+                Behavior on color { ColorAnimation { duration: 90 } }
                 text: modelData === "Tablet" ? (root.tabletService && root.tabletService.tabletMode ? "Tablet: on" : "Tablet: off") : (root.tabletService && root.tabletService.rotationLocked ? "Locked" : "Auto rotate")
                 color: root.foreground
                 font.pixelSize: 12
               }
               TapHandler {
+                id: tabTap
                 onTapped: {
                   if (!root.tabletService) return
                   if (modelData === "Tablet") root.tabletService.toggleTabletMode()
