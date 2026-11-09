@@ -278,7 +278,7 @@ Item {
           anchors.right: controls.left
           anchors.rightMargin: 6
           anchors.verticalCenter: controls.verticalCenter
-          width: 126; height: 34; radius: 5
+          width: 104; height: 34; radius: 5
           color: root.keyBackground
           Rectangle {
             width: 8; height: 8; radius: 4
@@ -287,11 +287,11 @@ Item {
             color: root.roddReady ? Color.accent : Color.urgent
           }
           Text {
-            anchors.left: parent.left; anchors.leftMargin: 24
+            anchors.left: parent.left; anchors.leftMargin: 22
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - 32
+            width: parent.width - 28
             elide: Text.ElideRight
-            text: "Rödd · " + root.roddNote
+            text: root.roddNote
             color: root.foreground
             font.pixelSize: 11
             font.family: Style.font.family
