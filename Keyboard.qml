@@ -229,7 +229,7 @@ Item {
           anchors.left: parent.left
           anchors.verticalCenter: parent.verticalCenter
           text: root.inputError || (root.tabletService && root.tabletService.error ? root.tabletService.error : (root.inputReady ? "Ymir  ·  every word carved from his body" : "Preparing keyboard…"))
-          width: parent.width - 250
+          width: parent.width - 430
           elide: Text.ElideRight
           color: root.inputError ? Color.urgent : root.foreground
           font.family: Style.font.family
@@ -239,6 +239,34 @@ Item {
           anchors.right: parent.right
           anchors.rightMargin: 52
           spacing: 6
+
+          // Rödd, the voice: raise it headless, lower it, and shut the microphone.
+          // Everything goes through the plugin's own door script, so the QML never
+          // builds a command line.
+          Repeater {
+            model: [
+              { label: "Rödd", action: "start" },
+              { label: "Stop", action: "stop" },
+              { label: "Mic", action: "mute" }
+            ]
+            delegate: Rectangle {
+              required property var modelData
+              width: modelData.action === "stop" ? 58 : 66
+              height: 34; radius: 5
+              color: root.keyBackground
+              Text {
+                anchors.centerIn: parent
+                text: modelData.label
+                color: root.foreground
+                font.pixelSize: 12
+              }
+              TapHandler {
+                onTapped: Quickshell.execDetached(["bash",
+                  decodeURIComponent(Qt.resolvedUrl("rodd-door.sh").toString().replace(/^file:\/\//, "")),
+                  modelData.action])
+              }
+            }
+          }
           Repeater {
             model: ["Tablet", "Rotation"]
             delegate: Rectangle {
@@ -263,7 +291,7 @@ Item {
         }
         MouseArea {
           anchors.fill: parent
-          anchors.rightMargin: 250
+          anchors.rightMargin: 430
           property real startX
           property real startY
           property real pointerX
