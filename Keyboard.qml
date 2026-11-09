@@ -211,13 +211,16 @@ Item {
     }
     return out
   }
-  readonly property bool roddReady: rodd.rail === "up" && rodd.head !== "absent" && rodd.host !== "down"
+  // ON only when a client is attached to the pipeline AND the rail carries the head it
+  // asks for. Everything else is OFF, with the reason in the words beside the dot.
   readonly property bool roddLive: rodd.client !== undefined && Number(rodd.client) > 0
+  readonly property bool roddReady: roddLive && rodd.rail === "up" && rodd.head !== "absent"
   readonly property string roddNote: rodd.rail === undefined || rodd.rail === ""
     ? "checking…"
-    : (rodd.rail !== "up" ? "rail down"
-      : (rodd.head === "absent" ? "no head"
-        : (roddLive ? (rodd.head === "unloaded" ? "head cold" : "listening") : "ready")))
+    : (!roddLive ? "off"
+      : (rodd.rail !== "up" ? "no rail"
+        : (rodd.head === "absent" ? "no head"
+          : (rodd.head === "loaded" ? "on" : "starting"))))
   Process {
     id: roddProbe
     command: ["bash",

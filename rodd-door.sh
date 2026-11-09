@@ -43,7 +43,8 @@ case "${1:-status}" in
     # one line, for the keyboard's indicator: is the pipeline up, is a client attached,
     # is the microphone open, and is the model rail actually serving the head the voice asks for?
     host="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8890/ 2>/dev/null || echo down)"
-    client="$(pgrep -fc ' talk --url' 2>/dev/null || echo 0)"
+    client="$(pgrep -fc ' talk --url' 2>/dev/null | tr -d '\n' || true)"
+    client="${client:-0}"
     if mic_muted; then mic="muted"; else mic="open"; fi
     head="${RODD_HEAD_MODEL:-qwen3.6-35b-a3b@iq3_s}"   # the same default apps/rodd/start.sh uses
     rail="down"; state=""
