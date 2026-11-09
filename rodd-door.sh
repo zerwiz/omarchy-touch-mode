@@ -42,10 +42,13 @@ case "${1:-status}" in
   status)
     # one line, for the keyboard's indicator: is the pipeline up, is a client attached,
     # is the microphone open, and is the model rail actually serving the head the voice asks for?
-    host="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8890/ 2>/dev/null || echo down)"
+    host="$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:8890/ 2>/dev/null)"
+    case "$host" in 000|"") host="down" ;; esac
     # Count only real clients. `pgrep -f` would match this very shell, whose own command
     # line carries the pattern, and the light then claimed a voice that was not running.
-    client="$(ps -eo comm=,args= 2>/dev/null | awk '$1 ~ /^python/ && / talk --url/ {n++} END {print n+0}')"
+    # The client's own comm is the truncated `speech-to-speec`, not `python`; match that,
+    # and never the shell or awk lines that merely quote the pattern.
+    client="$(ps -eo comm=,args= 2>/dev/null | awk '/ talk --url/ && $1 ~ /^speech-to-spee/ {n++} END {print n+0}')"
     if mic_muted; then mic="muted"; else mic="open"; fi
     # The head is whatever the RUNNING host was started with; the default is only a guess.
     head="$(systemctl --user show ymir-voice-host -p ExecStart 2>/dev/null \
