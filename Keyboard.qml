@@ -228,7 +228,7 @@ Item {
         Text {
           anchors.left: parent.left
           anchors.verticalCenter: parent.verticalCenter
-          text: root.inputError || (root.tabletService && root.tabletService.error ? root.tabletService.error : (root.inputReady ? "Keyboard  ·  drag to move  ·  one-shot modifiers" : "Preparing keyboard…"))
+          text: root.inputError || (root.tabletService && root.tabletService.error ? root.tabletService.error : (root.inputReady ? "every key a rune" : "Preparing keyboard…"))
           width: parent.width - 250
           elide: Text.ElideRight
           color: root.inputError ? Color.urgent : root.foreground
@@ -365,7 +365,7 @@ Item {
         x: 12
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 8
-        text: "Hold Backspace or arrows to repeat"
+        text: "Drag to move  ·  hold Backspace or arrows to repeat"
         color: root.foreground
         opacity: 0.65
         font.family: Style.font.family
