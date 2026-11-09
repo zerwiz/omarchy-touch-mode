@@ -308,7 +308,7 @@ Item {
           // builds a command line.
           Repeater {
             model: [
-              { label: "Rödd", action: "start" },
+              { label: "Rödd", action: "toggle" },
               { label: "Stop", action: "stop" },
               { label: "Mic", action: "mute" }
             ]
@@ -316,12 +316,14 @@ Item {
               required property var modelData
               width: modelData.action === "stop" ? 58 : 66
               height: 34; radius: 5
-              color: roddTap.pressed ? Color.accent : root.keyBackground
+              color: roddTap.pressed || (modelData.action === "toggle" && root.roddReady)
+                ? Color.accent : root.keyBackground
               Behavior on color { ColorAnimation { duration: 90 } }
               Text {
                 anchors.centerIn: parent
                 text: modelData.label
-                color: roddTap.pressed ? Color.background : root.foreground
+                color: roddTap.pressed || (modelData.action === "toggle" && root.roddReady)
+                  ? Color.background : root.foreground
                 Behavior on color { ColorAnimation { duration: 90 } }
                 font.pixelSize: 12
               }

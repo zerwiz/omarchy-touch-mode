@@ -35,6 +35,15 @@ case "${1:-status}" in
   stop)
     exec "$repo/apps/rodd/start.sh" --stop
     ;;
+  toggle)
+    # One button, two meanings: the same tap raises the voice when it is down and
+    # lowers it when it is up, so the button never argues with the light beside it.
+    running="$(ps -eo comm=,args= 2>/dev/null | awk '/ talk --url/ && $1 ~ /^speech-to-spee/ {n++} END {print n+0}')"
+    if [ "${running:-0}" -gt 0 ]; then
+      exec "$repo/apps/rodd/start.sh" --stop
+    fi
+    exec "$repo/apps/rodd/start.sh" --headless
+    ;;
   mute)
     wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle || exit 1
     if mic_muted; then echo "microphone muted"; else echo "microphone open"; fi
@@ -77,7 +86,7 @@ else:
     echo "host=$host client=$client mic=$mic rail=$rail head=$state"
     ;;
   *)
-    echo "usage: rodd-door.sh start|stop|mute|status" >&2
+    echo "usage: rodd-door.sh start|stop|toggle|mute|status" >&2
     exit 2
     ;;
 esac
